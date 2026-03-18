@@ -14,8 +14,7 @@ See [project.md](project.md) for full PRD.
 
 ---
 
-## 🎯 MVP Features (Complete ✅)
-
+## 🎯 MVP Features
 - **Community Feed:** Real-time posts with upvote/downvote/reporting moderation
 - **Infrastructure Map:** OpenStreetMap with 7 project categories (emoji markers)
 - **Permission Gating:** Location + Notification required to unlock Explore/Progress
@@ -239,35 +238,6 @@ firebase open hosting
 
 Default map center: New Delhi (28.6139°N, 77.2090°E)
 
----
-
-## ⚠️ Known Issues & Limitations
-
-### VAPID Key (Push Notifications)
-- Firebase Web Push VAPID key must be configured in `.env`
-- Current value is placeholder; update from Firebase Console → Cloud Messaging settings
-- Without valid VAPID, push notifications won't work (app still functional otherwise)
-
-### Bundle Size Warning
-- Web chunk is ~936 KB unminified (~248 KB gzipped)
-- This is normal for Firebase SDK size; consider code-splitting for production optimization
-
-### MVP Scope (Out of Scope)
-- ❌ AR overlay (deferred)
-- ❌ Offline-first support (basic PWA shell only)
-- ❌ Geofence auto-detection (manual exploration marking)
-- ❌ Advanced admin moderation dashboard
-- ❌ AI civic explanation deployment
-
----
-
-## 🔐 Security Checklist
-
-- ✅ `.env` in `.gitignore` (secrets never committed)
-- ✅ Firestore rules restrict direct post updates (only functions modify)
-- ✅ Auth required for voting/reporting/creating posts
-- ✅ User data scoped to own profile
-- ✅ HTTPS enforced on Firebase Hosting
 
 ---
 
@@ -283,43 +253,3 @@ Default map center: New Delhi (28.6139°N, 77.2090°E)
 | `firebase emulators:start` | Local Firebase emulator suite |
 | `firebase deploy` | Deploy all (rules, indexes, functions, hosting) |
 | `firebase logs` | View Cloud Function logs |
-
----
-
-## 🤝 Contributing
-
-1. Create a feature branch: `git checkout -b feature/my-feature`
-2. Commit changes: `git commit -m "Add my feature"`
-3. Push to GitHub: `git push origin feature/my-feature`
-4. Open a pull request
-
----
-
-## 📄 License
-
-MIT License - See LICENSE file (if present)
-
----
-
-## 📧 Support
-
-For issues or questions:
-- Check [project.md](project.md) for PRD details
-- Review Firestore console for data issues
-- Check Cloud Function logs: `firebase logs --only functions`
-
----
-
-## 🎉 Deployment Status
-
-- ✅ Web app: Production build ready
-- ✅ Cloud Functions: Compiled and ready to deploy
-- ✅ Firestore Rules: Ready for deployment
-- ✅ Firebase Hosting: Ready for deployment
-- ⚠️ Push Notifications: Blocked on VAPID key update (user action required)
-
-**Next Steps:**
-1. Create GitHub repo
-2. Push code (ensure `.env` is in `.gitignore`)
-3. Deploy to Firebase: `firebase deploy`
-4. Visit hosted URL and test
