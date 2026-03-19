@@ -1,294 +1,138 @@
-import { useEffect, useMemo, useState } from 'react'
-import {
-  createCommunityPost,
-  reportCommunityPost,
-  subscribeToCommunityPosts,
-  voteOnCommunityPost,
-} from '../lib/community/community'
-import { useAuth } from '../context/AuthContext'
-import type { CommunityPost } from '../types/community'
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Browserbysector } from "./Browserbysector";
+import Liveofeed from "../components/layout/Liveofeed";
+
+const SLIDES = [
+  {
+    image:
+      "https://images.unsplash.com/photo-1562601509-376518335492?q=80&w=2000",
+    title: "Modern Metro Expansion",
+    description:
+      "Real Delhi Metro under-construction progress and site monitoring.",
+    tag: "Mass Transit",
+  },
+  {
+    image:
+      "https://images.unsplash.com/photo-1581094271901-8022df4466f9?q=80&w=2000",
+    category: "Bridge Engineering",
+    title: "Signature Bridge Phase II",
+    description:
+      "Structural health monitoring of the pylon and high-tension cables.",
+    tag: "Civil Works",
+  },
+  {
+    image:
+      "https://images.unsplash.com/photo-1545459720-aac273a27765?q=80&w=2000",
+    title: "Central Vista Project",
+    description:
+      "Modernizing the administrative heart with sustainable urban drainage.",
+    tag: "Urban Dev",
+  },
+];
 
 export function HomePage() {
-  const { user, signIn, isConfigured } = useAuth()
-  const [posts, setPosts] = useState<CommunityPost[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [showAuthPrompt, setShowAuthPrompt] = useState(false)
-  const [showComposer, setShowComposer] = useState(false)
-  const [content, setContent] = useState('')
-  const [reportReasonByPost, setReportReasonByPost] = useState<Record<string, string>>({})
-  const [pendingActionByPost, setPendingActionByPost] = useState<Record<string, boolean>>({})
-  const [submittingPost, setSubmittingPost] = useState(false)
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const touchStart = useRef(0);
+  const touchEnd = useRef(0);
+
+  const nextSlide = useCallback(() => {
+    setCurrentIndex((prev) => (prev === SLIDES.length - 1 ? 0 : prev + 1));
+  }, []);
+
+  const handleTouchStart = (e: React.TouchEvent) =>
+    (touchStart.current = e.targetTouches[0].clientX);
+  const handleTouchMove = (e: React.TouchEvent) =>
+    (touchEnd.current = e.targetTouches[0].clientX);
+  const handleTouchEnd = () => {
+    const distance = touchStart.current - touchEnd.current;
+    if (distance > 50) nextSlide();
+    if (distance < -50)
+      setCurrentIndex((prev) => (prev === 0 ? SLIDES.length - 1 : prev - 1));
+  };
 
   useEffect(() => {
-    if (!isConfigured) {
-      setLoading(false)
-      return
-    }
-
-    const unsubscribe = subscribeToCommunityPosts(
-      (nextPosts) => {
-        setPosts(nextPosts)
-        setLoading(false)
-      },
-      (nextError) => {
-        setError(nextError.message)
-        setLoading(false)
-      },
-    )
-
-    return unsubscribe
-  }, [isConfigured])
-
-  const sortedPosts = useMemo(() => posts, [posts])
-
-  async function openCreatePost() {
-    if (!user) {
-      setShowAuthPrompt(true)
-      return
-    }
-
-    setShowComposer(true)
-  }
-
-  async function handleGoogleLogin() {
-    try {
-      await signIn()
-      setShowAuthPrompt(false)
-      setShowComposer(true)
-      setError(null)
-    } catch (authError) {
-      setError(authError instanceof Error ? authError.message : 'Login failed.')
-    }
-  }
-
-  async function handleCreatePost() {
-    if (!user) {
-      setShowAuthPrompt(true)
-      return
-    }
-
-    try {
-      setSubmittingPost(true)
-      await createCommunityPost(content, user)
-      setContent('')
-      setShowComposer(false)
-      setError(null)
-    } catch (createError) {
-      setError(createError instanceof Error ? createError.message : 'Could not create post.')
-    } finally {
-      setSubmittingPost(false)
-    }
-  }
-
-  async function handleVote(postId: string, vote: 'up' | 'down') {
-    if (!user) {
-      setShowAuthPrompt(true)
-      return
-    }
-
-    try {
-      setPendingActionByPost((prev) => ({ ...prev, [postId]: true }))
-      await voteOnCommunityPost(postId, vote)
-      setError(null)
-    } catch (voteError) {
-      setError(voteError instanceof Error ? voteError.message : 'Unable to vote right now.')
-    } finally {
-      setPendingActionByPost((prev) => ({ ...prev, [postId]: false }))
-    }
-  }
-
-  async function handleReport(postId: string) {
-    if (!user) {
-      setShowAuthPrompt(true)
-      return
-    }
-
-    const reason = (reportReasonByPost[postId] || '').trim()
-    if (reason.length < 4) {
-      setError('Please provide a short reason (min 4 chars) before reporting.')
-      return
-    }
-
-    try {
-      setPendingActionByPost((prev) => ({ ...prev, [postId]: true }))
-      await reportCommunityPost(postId, reason)
-      setReportReasonByPost((prev) => ({ ...prev, [postId]: '' }))
-      setError(null)
-    } catch (reportError) {
-      setError(reportError instanceof Error ? reportError.message : 'Unable to report this post.')
-    } finally {
-      setPendingActionByPost((prev) => ({ ...prev, [postId]: false }))
-    }
-  }
+    const timer = setInterval(nextSlide, 5000);
+    return () => clearInterval(timer);
+  }, [nextSlide]);
 
   return (
-    <section className="space-y-4">
-      <div className="rounded-3xl bg-gradient-to-br from-orange-500 to-orange-400 p-5 text-white shadow-lg shadow-orange-200">
-        <p className="text-sm/5 text-orange-100">Welcome back</p>
-        <h2 className="mt-1 text-2xl font-semibold">Explore. Discuss. Earn.</h2>
-        <p className="mt-2 text-sm text-orange-100">Paridhi community is live with moderated civic discussions.</p>
-      </div>
-
-      {!isConfigured ? (
-        <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900">
-          Firebase credentials are not configured yet. Add values in `.env` to activate auth, posts, moderation, reports, and voting.
-        </div>
-      ) : null}
-
-      <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Government Highlights</h3>
-        <ul className="mt-3 space-y-2 text-sm text-neutral-700">
-          <li>• Metro access ramps expansion in Phase-2 corridors.</li>
-          <li>• River cleanup smart-monitoring pilot launched.</li>
-          <li>• New electric bus charging depots approved.</li>
-        </ul>
-      </div>
-
-      <div className="space-y-3 pb-4">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Community Feed</h3>
-
-        {loading ? <p className="text-sm text-neutral-500">Loading posts...</p> : null}
-
-        {!loading && sortedPosts.length === 0 ? (
-          <div className="rounded-2xl border border-neutral-200 bg-white p-4 text-sm text-neutral-600 shadow-sm">
-            No community posts yet. Be the first to share a civic discovery.
-          </div>
-        ) : null}
-
-        {sortedPosts.map((post) => {
-          const isPending = Boolean(pendingActionByPost[post.id])
-
-          return (
-            <article key={post.id} className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 overflow-hidden rounded-full bg-orange-100">
-                    {post.authorPhotoURL ? (
-                      <img src={post.authorPhotoURL} alt={post.authorName} className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="grid h-full w-full place-items-center text-xs font-semibold text-orange-700">
-                        {post.authorName.slice(0, 2).toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-neutral-700">{post.authorName}</p>
-                    <p className="text-[11px] uppercase tracking-wide text-neutral-400">{post.status}</p>
-                  </div>
-                </div>
-                <span className="rounded-full bg-black px-3 py-1 text-xs font-semibold text-white">Score {post.score}</span>
-              </div>
-
-              <p className="mt-3 text-sm text-neutral-700">{post.content}</p>
-
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-                <button
-                  disabled={isPending}
-                  onClick={() => handleVote(post.id, 'up')}
-                  className="rounded-full border border-neutral-200 px-3 py-1 font-medium text-neutral-700 transition hover:border-orange-300 hover:text-orange-700 disabled:opacity-40"
-                >
-                  👍 {post.upvotes}
-                </button>
-                <button
-                  disabled={isPending}
-                  onClick={() => handleVote(post.id, 'down')}
-                  className="rounded-full border border-neutral-200 px-3 py-1 font-medium text-neutral-700 transition hover:border-orange-300 hover:text-orange-700 disabled:opacity-40"
-                >
-                  👎 {post.downvotes}
-                </button>
-                <span className="rounded-full border border-neutral-200 px-3 py-1 text-neutral-500">🚩 {post.reports}</span>
-              </div>
-
-              <div className="mt-3 flex gap-2">
-                <input
-                  value={reportReasonByPost[post.id] || ''}
-                  onChange={(event) =>
-                    setReportReasonByPost((prev) => ({
-                      ...prev,
-                      [post.id]: event.target.value,
-                    }))
-                  }
-                  placeholder="Reason to report"
-                  className="flex-1 rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none transition focus:border-orange-400"
-                />
-                <button
-                  disabled={isPending}
-                  onClick={() => handleReport(post.id)}
-                  className="rounded-xl bg-black px-3 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-50"
-                >
-                  Report
-                </button>
-              </div>
-            </article>
-          )
-        })}
-      </div>
-
-      <button
-        onClick={openCreatePost}
-        className="fixed bottom-28 right-6 z-30 rounded-full bg-orange-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200"
+    <div className="max-w-md mx-auto bg-white min-h-screen">
+      {/* 1. TOP SWIPER CARD */}
+      <div
+        className="mx-4 mt-6 h-[220px] relative rounded-[24px] overflow-hidden shadow-xl shadow-stone-200 group cursor-pointer"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onClick={nextSlide}
       >
-        + Create Post
-      </button>
+        <div
+          className="flex h-full w-full transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
+          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+        >
+          {SLIDES.map((slide, i) => (
+            <div key={i} className="min-w-full h-full relative">
+              <img
+                src={slide.image}
+                className="h-full w-full object-cover brightness-[0.7]"
+                alt="Project"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
-      {showComposer ? (
-        <div className="fixed inset-0 z-40 grid place-items-center bg-black/40 p-5">
-          <div className="w-full max-w-sm rounded-3xl border border-white/30 bg-white/70 p-5 shadow-xl backdrop-blur-xl">
-            <h4 className="text-lg font-semibold">Create a community post</h4>
-            <textarea
-              value={content}
-              onChange={(event) => setContent(event.target.value)}
-              rows={5}
-              placeholder="Share what you discovered in your city..."
-              className="mt-3 w-full rounded-2xl border border-neutral-200 px-3 py-3 text-sm outline-none transition focus:border-orange-400"
+              <div className="absolute inset-0 p-6 flex flex-col justify-end">
+                <h2 className="text-white text-xl font-black uppercase leading-tight mb-1">
+                  {slide.title}
+                </h2>
+                <p className="text-white/70 text-[10px] font-medium max-w-[80%] mb-3">
+                  {slide.description}
+                </p>
+                <span className="w-fit px-3 py-1 bg-[#D97706] text-white rounded-full text-[9px] font-bold uppercase tracking-widest">
+                  {slide.tag}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* PROGRESS DOTS (Exactly as per image) */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+          {SLIDES.map((_, i) => (
+            <div
+              key={i}
+              className={`h-1.5 transition-all duration-300 rounded-full ${currentIndex === i ? "w-6 bg-orange-500" : "w-1.5 bg-white/40"}`}
             />
-            <div className="mt-4 flex gap-2">
-              <button
-                onClick={handleCreatePost}
-                disabled={submittingPost}
-                className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-              >
-                {submittingPost ? 'Posting...' : 'Post'}
-              </button>
-              <button
-                onClick={() => setShowComposer(false)}
-                className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+          ))}
         </div>
-      ) : null}
+      </div>
 
-      {showAuthPrompt ? (
-        <div className="fixed inset-0 z-40 grid place-items-center bg-black/40 p-5">
-          <div className="w-full max-w-sm rounded-3xl border border-white/30 bg-white/70 p-5 shadow-xl backdrop-blur-xl">
-            <h4 className="text-lg font-semibold">Sign in required</h4>
-            <p className="mt-2 text-sm text-neutral-700">
-              Continue with Google to post, vote, downvote, and report content.
-            </p>
-            <div className="mt-4 flex gap-2">
-              <button onClick={handleGoogleLogin} className="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white">
-                Continue with Google
-              </button>
-              <button
-                onClick={() => setShowAuthPrompt(false)}
-                className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+      {/* 2. LIVE STATS BAR (The white icons bar under swiper) */}
+      <div className="mx-4 mt-6 grid grid-cols-3 gap-2">
+        <div className="bg-white p-3 rounded-2xl border border-stone-100 shadow-sm flex flex-col items-center">
+          <span className="text-[10px] font-bold text-stone-400 uppercase tracking-tighter">
+            Active Tenders
+          </span>
+          <span className="text-lg font-black text-[#451a03]">1,240+</span>
         </div>
-      ) : null}
+        <div className="bg-white p-3 rounded-2xl border border-stone-100 shadow-sm flex flex-col items-center">
+          <span className="text-[10px] font-bold text-stone-400 uppercase tracking-tighter">
+            Completed
+          </span>
+          <span className="text-lg font-black text-[#451a03]">450</span>
+        </div>
+        <div className="bg-white p-3 rounded-2xl border border-stone-100 shadow-sm flex flex-col items-center">
+          <span className="text-[10px] font-bold text-stone-400 uppercase tracking-tighter">
+            Total Value
+          </span>
+          <span className="text-lg font-black text-[#451a03]">₹12k CR</span>
+        </div>
+      </div>
 
-      {error ? (
-        <div className="fixed left-1/2 top-16 z-50 w-[92%] max-w-sm -translate-x-1/2 rounded-xl bg-black px-3 py-2 text-sm text-white shadow-lg">
-          {error}
-        </div>
-      ) : null}
-    </section>
-  )
+      {/* Section Label */}
+      <div className="px-6 mt-6">
+        <Browserbysector />
+      </div>
+      <div>
+        <Liveofeed />
+      </div>
+    </div>
+  );
 }
