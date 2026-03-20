@@ -1,13 +1,15 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
-import { AppShell } from './components/layout/AppShell'
-import { AboutPage } from './pages/AboutPage'
-import { ExplorePage } from './pages/ExplorePage'
-import { HomePage } from './pages/HomePage'
-import { NotFoundPage } from './pages/NotFoundPage'
-import { PrivacyPage } from './pages/PrivacyPage'
-import { ProfilePage } from './pages/ProfilePage'
-import { ProgressPage } from './pages/ProgressPage'
-import { TosPage } from './pages/TosPage'
+import { Navigate, Route, Routes } from "react-router-dom";
+import { AppShell } from "./components/layout/AppShell";
+import { AboutPage } from "./pages/AboutPage";
+import { ExplorePage } from "./pages/ExplorePage";
+import { HomePage } from "./pages/HomePage";
+import { NotFoundPage } from "./pages/NotFoundPage";
+import { PrivacyPage } from "./pages/PrivacyPage";
+import { ProfilePage } from "./pages/ProfilePage";
+import { ProgressPage } from "./pages/ProgressPage";
+import { TosPage } from "./pages/TosPage";
+import SearchPage from "./pages/SearchPage";
+import Settingpages from "./pages/Settingpages";
 
 function App() {
   return (
@@ -21,10 +23,12 @@ function App() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/tos" element={<TosPage />} />
+        <Route path="/search" element={<SearchPage />} />
+        <Route path="/setting" element={<Settingpages />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;
