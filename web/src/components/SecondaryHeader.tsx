@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { ChevronLeft, Bell } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function SecondaryHeader() {
   const { user } = useAuth();
@@ -45,7 +46,10 @@ export function SecondaryHeader() {
 
           {/* Compact Notification Icon */}
           <button className="relative p-2 bg-white/10 hover:bg-white/20 rounded-xl border border-white/10 transition-all active:scale-90">
-            <Bell size={18} className="text-white" strokeWidth={2.5} />
+            <Link to="/notification">
+ <Bell size={18} className="text-white" strokeWidth={2.5} />
+        </Link>
+           
             <span className="absolute top-2 right-2 h-2 w-2 bg-yellow-400 rounded-full border border-orange-700"></span>
           </button>
         </div>

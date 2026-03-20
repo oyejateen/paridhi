@@ -10,6 +10,7 @@ import { ProgressPage } from "./pages/ProgressPage";
 import { TosPage } from "./pages/TosPage";
 import SearchPage from "./pages/SearchPage";
 import Settingpages from "./pages/Settingpages";
+import NotificationsPage from "./pages/NotificationsPage";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route path="/tos" element={<TosPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/setting" element={<Settingpages />} />
+        <Route path="/notification" element={<NotificationsPage/>}/>
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
