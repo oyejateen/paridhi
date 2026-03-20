@@ -23,7 +23,10 @@ export function TopHeader() {
         </Link>
    
         <button className="relative p-2 bg-white/10 hover:bg-white/20 rounded-xl border border-white/20 backdrop-blur-md transition-all active:scale-90">
-          <Bell size={20} className="text-white" />
+        <Link to="/notification">
+ <Bell size={20} className="text-white" />
+        </Link>
+         
           <span className="absolute top-2 right-2.5 h-2 w-2 bg-yellow-400 rounded-full border border-orange-600"></span>
         </button>
       </div>
