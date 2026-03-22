@@ -209,3 +209,70 @@ export const moderatePostOnCreate = onDocumentCreated(
     })
   },
 )
+
+// Cloud Function to enhance project descriptions using HuggingFace
+export const enhanceProjectDescription = onCall(
+  { region: 'asia-south1' },
+  async (request) => {
+    if (!request.auth || request.auth.token.admin !== true) {
+      throw new HttpsError('permission-denied', 'Only admins can enhance project descriptions.')
+    }
+
+    const projectId = String(request.data?.projectId ?? '').trim()
+    const description = String(request.data?.description ?? '').trim()
+
+    if (!projectId || !description || description.length < 10) {
+      throw new HttpsError('invalid-argument', 'projectId and description are required.')
+    }
+
+    try {
+      // Call HuggingFace Inference API
+      // Using a free model: facebook/bart-large-cnn for summarization
+      const hfApi = process.env.HUGGING_FACE_API_KEY
+      if (!hfApi) {
+        throw new Error('HUGGING_FACE_API_KEY is not configured.')
+      }
+
+      const response = await fetch('https://api-inference.huggingface.co/models/facebook/bart-large-cnn', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${hfApi}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          inputs: description,
+          parameters: {
+            max_length: 150,
+            min_length: 50,
+          },
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.text()
+        logger.error('HuggingFace API error', { error })
+        throw new Error(`HuggingFace API error: ${response.status}`)
+      }
+
+      const result = await response.json() as Array<{ summary_text: string }>
+      const enhancedContent = result[0]?.summary_text || description
+
+      logger.info('Project description enhanced', {
+        projectId,
+        originalLength: description.length,
+        enhancedLength: enhancedContent.length,
+      })
+
+      return {
+        ok: true,
+        enhancedContent,
+      }
+    } catch (error) {
+      logger.error('Project enhancement failed', {
+        projectId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      })
+      throw new HttpsError('internal', 'Failed to enhance project description.')
+    }
+  },
+)

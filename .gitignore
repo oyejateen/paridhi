@@ -1,33 +1,62 @@
-# Environment variables (KEEP SECRET)
+# ⚠️ ENVIRONMENT & SECRETS - CRITICAL: NEVER COMMIT THESE
 .env
 .env.local
+.env.production
+.env.production.local
 .env.*.local
+.env.*.example
 
-# Firebase
+# Firebase Configuration
 .firebaserc
 firebase-debug.log
+secrets/
+firebase-keys/
+*.key
+*.pem
+
+# Sensitive Files
+.env.vault
+.env.enc
 
 # Dependencies
 node_modules/
 package-lock.json
+yarn.lock
 
 # Build outputs
 dist/
 dist-ssr/
 functions/lib/
+*.local
 
-# IDE
+# IDE & Editor
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+*.sublime-project
+*.sublime-workspace
 
 # OS
-.DS_Store
 Thumbs.db
+*.pdb
 
-# Logs
+# Development & Logs
+*.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+.coverage/
+.nyc_output/
+
+# Development scripts (keep local only)
+start-emulator.bat
+start-emulator.sh
+main_1.py
 *.log
 npm-debug.log*
 yarn-debug.log*

@@ -14,4 +14,13 @@ export interface CityProject {
   lat: number
   lng: number
   description: string
+  longDescription?: string
+  status?: 'ongoing' | 'completed' | 'handovered'
+  type?: string
+  location?: string
+  department?: string
+  division?: string
+  priority?: 'high_value' | 'normal'
+  completionPercentage?: number
+  enhancedContent?: string
 }

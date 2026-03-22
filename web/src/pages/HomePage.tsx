@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import CommunityPage from "../components/CommunityPage";
 import { Timer, MapPin, ChevronRight } from "lucide-react";
 
@@ -35,11 +35,6 @@ export function HomePage() {
   const touchStart = useRef(0);
   const touchEnd = useRef(0);
 
-  const nextSlide = useCallback(() => {
-    setCurrentIndex((prev) => (prev === SLIDES.length - 1 ? 0 : prev + 1));
-    setProgress(0); // Reset progress on manual or auto change
-  }, []);
-
   // Handle auto-progress animation
   useEffect(() => {
     const duration = 5000; // 5 seconds per slide
@@ -49,7 +44,8 @@ export function HomePage() {
     const timer = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
-          nextSlide();
+          // Advance to next slide when progress completes
+          setCurrentIndex((idx) => (idx === SLIDES.length - 1 ? 0 : idx + 1));
           return 0;
         }
         return prev + step;
@@ -57,7 +53,7 @@ export function HomePage() {
     }, interval);
 
     return () => clearInterval(timer);
-  }, [nextSlide]);
+  }, []);
 
   return (
     <div className="max-w-md mx-auto bg-[#fff7f0] min-h-screen pb-20">
@@ -68,8 +64,14 @@ export function HomePage() {
         onTouchStart={(e) => touchStart.current = e.targetTouches[0].clientX}
         onTouchMove={(e) => touchEnd.current = e.targetTouches[0].clientX}
         onTouchEnd={() => {
-          if (touchStart.current - touchEnd.current > 50) nextSlide();
-          if (touchStart.current - touchEnd.current < -50) setCurrentIndex(prev => prev === 0 ? SLIDES.length - 1 : prev - 1);
+          if (touchStart.current - touchEnd.current > 50) {
+            setCurrentIndex((idx) => (idx === SLIDES.length - 1 ? 0 : idx + 1));
+            setProgress(0);
+          }
+          if (touchStart.current - touchEnd.current < -50) {
+            setCurrentIndex((idx) => (idx === 0 ? SLIDES.length - 1 : idx - 1));
+            setProgress(0);
+          }
         }}
       >
         {SLIDES.map((slide, i) => (

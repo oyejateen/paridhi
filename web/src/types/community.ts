@@ -15,4 +15,6 @@ export interface CommunityPost {
   status: PostStatus
   createdAt: Timestamp | null
   updatedAt: Timestamp | null
+  projectId?: string // Link to a project
+  imageURL?: string // Allow image attachments
 }

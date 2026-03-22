@@ -35,7 +35,7 @@ function ensureFunctions() {
   return firebaseFunctions
 }
 
-export async function createCommunityPost(content: string, user: User) {
+export async function createCommunityPost(content: string, user: User, projectId?: string) {
   const firestore = ensureDb()
   const cleanContent = content.trim()
 
@@ -48,6 +48,7 @@ export async function createCommunityPost(content: string, user: User) {
     authorName: user.displayName ?? 'Explorer',
     authorPhotoURL: user.photoURL ?? null,
     content: cleanContent,
+    projectId: projectId ?? null,
     status: 'active',
     upvotes: 0,
     downvotes: 0,
@@ -77,6 +78,54 @@ export function subscribeToCommunityPosts(
   const firestore = ensureDb()
   const postsQuery = query(
     collection(firestore, 'posts'),
+    where('status', 'in', ['active', 'limited']),
+    orderBy('score', 'desc'),
+    orderBy('createdAt', 'desc'),
+  )
+
+  return onSnapshot(
+    postsQuery,
+    (snapshot) => {
+      const posts: CommunityPost[] = snapshot.docs.map((doc) => {
+        const raw = doc.data() as Omit<CommunityPost, 'id'>
+        return {
+          id: doc.id,
+          ...raw,
+          authorPhotoURL: raw.authorPhotoURL ?? null,
+          status: raw.status ?? 'active',
+          upvotes: Number(raw.upvotes ?? 0),
+          downvotes: Number(raw.downvotes ?? 0),
+          reports: Number(raw.reports ?? 0),
+          score: Number(raw.score ?? 0),
+          createdAt: raw.createdAt ?? null,
+          updatedAt: raw.updatedAt ?? null,
+        }
+      })
+
+      posts.sort((a, b) => {
+        const statusDelta = moderationPriority[a.status] - moderationPriority[b.status]
+        if (statusDelta !== 0) return statusDelta
+        if (a.score !== b.score) return b.score - a.score
+        const aTime = a.createdAt?.toMillis() ?? 0
+        const bTime = b.createdAt?.toMillis() ?? 0
+        return bTime - aTime
+      })
+
+      callback(posts)
+    },
+    (error) => onError(error),
+  )
+}
+
+export function subscribeToProjectPosts(
+  projectId: string,
+  callback: (posts: CommunityPost[]) => void,
+  onError: (error: Error) => void,
+): Unsubscribe {
+  const firestore = ensureDb()
+  const postsQuery = query(
+    collection(firestore, 'posts'),
+    where('projectId', '==', projectId),
     where('status', 'in', ['active', 'limited']),
     orderBy('score', 'desc'),
     orderBy('createdAt', 'desc'),

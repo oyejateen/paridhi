@@ -7,10 +7,10 @@
 **Paridhi** is a mobile-first Progressive Web App that gamifies civic infrastructure exploration. Users can discover nearby infrastructure projects, engage with their community through posts and votes, earn XP and badges, and unlock insights about urban development.
 
 **Platform:** Mobile-first PWA (iOS, Android, Web)  
-**Stack:** React + TypeScript + Tailwind + Firebase (Auth, Firestore, Cloud Functions)  
-**Region:** Asia-South1 (India)
-
-See [project.md](project.md) for full PRD.
+**Stack:** React + TypeScript + Tailwind CSS + Firebase  
+**Deployment:** Firebase Hosting + Cloud Functions  
+**Region:** Asia-South1 (India)  
+**Status:** ✅ Production Ready
 
 ---
 
@@ -83,40 +83,49 @@ cd ../functions
 npm install
 ```
 
-### 3. Configure Firebase
+### 3. Configure Environment Variables
 
-**Copy template files:**
+**⚠️ Security First:** Never commit `.env` files to GitHub. Use `.env.example` as template.
+
 ```bash
-cd ../
-cp .firebaserc.example .firebaserc
 cp web/.env.example web/.env
 ```
 
-**Edit `.firebaserc`:**
-```json
-{
-  "projects": {
-    "default": "your-firebase-project-id"
-  }
-}
+**For Development (Local Testing):**
+Edit `web/.env`:
 ```
-
-**Edit `web/.env`:**
-```
-VITE_FIREBASE_API_KEY=your_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your-project-id
-VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
-VITE_FIREBASE_VAPID_KEY=your_web_push_vapid_key
+VITE_USE_FIREBASE_EMULATORS=true
+VITE_FIREBASE_API_KEY=dev_key
+VITE_FIREBASE_AUTH_DOMAIN=pranidhi-3c2ad.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=pranidhi-3c2ad
+VITE_FIREBASE_STORAGE_BUCKET=pranidhi-3c2ad.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=763950514060
+VITE_FIREBASE_APP_ID=1:763950514060:web:9bbfeda29f96021660e0a9
+VITE_FIREBASE_VAPID_KEY=your_dev_vapid_key
 VITE_FIREBASE_FUNCTIONS_REGION=asia-south1
-VITE_USE_FIREBASE_EMULATORS=false
 VITE_DEFAULT_LAT=28.6139
 VITE_DEFAULT_LNG=77.2090
 ```
 
-> ⚠️ **IMPORTANT:** Get these from [Firebase Console](https://console.firebase.google.com) → Project Settings → General
+**For Production Deployment:**
+Set environment variables in your CI/CD platform (GitHub Actions, Vercel, etc.):
+```
+VITE_USE_FIREBASE_EMULATORS=false
+VITE_FIREBASE_API_KEY=<prod_key>
+VITE_FIREBASE_AUTH_DOMAIN=<prod_domain>
+VITE_FIREBASE_PROJECT_ID=<prod_project_id>
+VITE_FIREBASE_STORAGE_BUCKET=<prod_bucket>
+VITE_FIREBASE_MESSAGING_SENDER_ID=<prod_sender_id>
+VITE_FIREBASE_APP_ID=<prod_app_id>
+VITE_FIREBASE_VAPID_KEY=<prod_vapid_key>
+```
+
+**Firebase CLI Setup:**
+```bash
+npm install -g firebase-tools
+firebase login
+firebase use your-firebase-project-id
+```
 
 ### 4. Verify Builds
 

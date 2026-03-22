@@ -92,19 +92,19 @@ export function ProfilePage() {
           </div>
         </div>
 
-        {/* 3. SETTINGS & CONNECTIVITY */}
+        {/* 3. SECURITY & AUTH - Google Sign In */}
         <div>
           <h3 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-4 ml-2">
             Security & Auth
           </h3>
-          <div className="bg-white rounded-[32px] p-2 border border-stone-100 shadow-sm">
+          <div className="bg-white rounded-[32px] p-4 border border-stone-100 shadow-sm space-y-4">
             <ActionRow
               icon={<GlobeIcon />}
-              label="Google Connection"
-              value={user ? "Linked" : "Disconnected"}
+              label="Google Account"
+              value={user ? "Connected ✓" : "Not Connected"}
             />
 
-            <div className="mt-2 p-2">
+            <div className="pt-2 border-t border-stone-100">
               {!user ? (
                 <button
                   onClick={signIn}
@@ -113,12 +113,18 @@ export function ProfilePage() {
                   Connect Google Account
                 </button>
               ) : (
-                <button
-                  onClick={signOut}
-                  className="w-full bg-red-50 text-red-600 py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center justify-center gap-2 active:scale-95 transition-all"
-                >
-                  <LogOut size={14} /> Sign Out
-                </button>
+                <div className="space-y-3">
+                  <div className="px-4 py-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                    <p className="text-[10px] font-black text-emerald-700 uppercase">✓ Signed In</p>
+                    <p className="text-[11px] text-emerald-600 font-bold mt-1">{user.displayName || user.email}</p>
+                  </div>
+                  <button
+                    onClick={signOut}
+                    className="w-full bg-red-50 hover:bg-red-100 text-red-600 py-3 rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center justify-center gap-2 active:scale-95 transition-all"
+                  >
+                    <LogOut size={14} /> Sign Out
+                  </button>
+                </div>
               )}
             </div>
           </div>

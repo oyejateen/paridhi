@@ -6,6 +6,7 @@ import App from './App.tsx'
 import { AuthProvider } from './context/AuthContext'
 import { PermissionsProvider } from './context/PermissionsContext'
 import { ExplorationProvider } from './context/ExplorationContext'
+import { ModalProvider } from './context/ModalContext'
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
@@ -22,9 +23,11 @@ createRoot(document.getElementById('root')!).render(
     <AuthProvider>
       <PermissionsProvider>
         <ExplorationProvider>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
+          <ModalProvider>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </ModalProvider>
         </ExplorationProvider>
       </PermissionsProvider>
     </AuthProvider>

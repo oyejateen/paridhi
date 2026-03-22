@@ -25,6 +25,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
       setUser(nextUser)
+      
+      // Store/Remove UID in localStorage for persistence and easy access
+      if (nextUser?.uid) {
+        localStorage.setItem('paridhi:userId', nextUser.uid)
+        localStorage.setItem('paridhi:userEmail', nextUser.email || '')
+        localStorage.setItem('paridhi:userName', nextUser.displayName || 'Explorer')
+        console.log('💾 Stored user session in localStorage:', nextUser.uid)
+      } else {
+        localStorage.removeItem('paridhi:userId')
+        localStorage.removeItem('paridhi:userEmail')
+        localStorage.removeItem('paridhi:userName')
+        console.log('🗑️ Cleared user session from localStorage')
+      }
+      
       setLoading(false)
     })
 
