@@ -15,6 +15,7 @@ export interface EnhancedProject {
   division?: string
   priority?: 'high_value' | 'normal'
   completionPercentage?: number
+  impact?: string
 }
 
 export const enhancedProjects: EnhancedProject[] = [
@@ -32,6 +33,7 @@ export const enhancedProjects: EnhancedProject[] = [
     location: 'Delhi High Court',
     department: 'PWD Delhi',
     completionPercentage: 45,
+    impact: '15k+ daily visitors',
   },
   {
     id: 'proj_ddma_alipur_001',
@@ -45,6 +47,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'renovation',
     location: 'District Magistrate Office Alipur',
     completionPercentage: 60,
+    impact: '2M+ regional safety',
   },
   {
     id: 'proj_delhi_hc_maint_002',
@@ -59,6 +62,7 @@ export const enhancedProjects: EnhancedProject[] = [
     location: 'Delhi High Court',
     department: 'PWD Delhi',
     completionPercentage: 50,
+    impact: 'Core civic infra',
   },
   {
     id: 'proj_air_pollution_001',
@@ -73,6 +77,7 @@ export const enhancedProjects: EnhancedProject[] = [
     location: 'South West Delhi Roads',
     division: 'South West Road-I',
     completionPercentage: 100,
+    impact: '3M+ residents AQI',
   },
   {
     id: 'proj_cctv_ac40_001',
@@ -86,6 +91,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'surveillance',
     location: 'New Delhi Constituency AC-40',
     completionPercentage: 100,
+    impact: '150k+ safer streets',
   },
   {
     id: 'proj_led_shalimar_001',
@@ -99,6 +105,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'lighting',
     location: 'Shalimar Bagh Roads',
     completionPercentage: 100,
+    impact: '50k+ local residents',
   },
   
   // HEALTHCARE INFRASTRUCTURE
@@ -115,6 +122,7 @@ export const enhancedProjects: EnhancedProject[] = [
     location: 'Atal Asha Home PHC Narela',
     priority: 'normal',
     completionPercentage: 55,
+    impact: '10k+ patients/month',
   },
   {
     id: 'proj_road_strengthening_se_delhi_001',
@@ -128,6 +136,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'road_strengthening',
     location: 'South East Delhi Roads',
     completionPercentage: 65,
+    impact: '200k+ daily commuters',
   },
   {
     id: 'proj_jaitpur_road_001',
@@ -141,6 +150,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'road_strengthening',
     location: 'Jaitpur Road',
     completionPercentage: 40,
+    impact: '40k+ local traffic',
   },
   {
     id: 'proj_ser2_multi_roads_002',
@@ -155,6 +165,7 @@ export const enhancedProjects: EnhancedProject[] = [
     location: 'SER-2 Road Cluster',
     division: 'SER-2',
     completionPercentage: 50,
+    impact: '100k+ daily traffic',
   },
   {
     id: 'proj_keshav_vidyalaya_001',
@@ -168,6 +179,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'maintenance',
     location: 'Keshav Maha Vidyalaya',
     completionPercentage: 100,
+    impact: '3k+ students staff',
   },
   {
     id: 'proj_mayur_vihar_flats_001',
@@ -181,6 +193,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'electrical_maintenance',
     location: 'Mayur Vihar Phase II Flats',
     completionPercentage: 70,
+    impact: '1k+ housing units',
   },
   {
     id: 'proj_bmh_hospital_001',
@@ -194,6 +207,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'maintenance',
     location: 'BMH Hospital',
     completionPercentage: 100,
+    impact: '200 beds safety',
   },
   {
     id: 'proj_srhc_rohini_multi_001',
@@ -207,6 +221,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'surveillance_and_utilities',
     location: 'Healthcare Surveillance Cluster',
     completionPercentage: 100,
+    impact: '50k+ patients safe',
   },
   {
     id: 'proj_bjrm_laundry_001',
@@ -221,6 +236,7 @@ export const enhancedProjects: EnhancedProject[] = [
     location: 'BJRM Hospital Jahangirpuri',
     priority: 'high_value',
     completionPercentage: 75,
+    impact: 'Hospital hygiene scale',
   },
   {
     id: 'proj_sgm_lifts_001',
@@ -234,6 +250,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'maintenance',
     location: 'SGM Hospital Mangolpuri',
     completionPercentage: 100,
+    impact: 'Safe transit care',
   },
   {
     id: 'proj_dcb_hospital_001',
@@ -248,6 +265,7 @@ export const enhancedProjects: EnhancedProject[] = [
     location: 'Deep Chand Bandhu Hospital',
     priority: 'high_value',
     completionPercentage: 60,
+    impact: 'State-of-art facility',
   },
   {
     id: 'proj_ac_multi_offices_001',
@@ -261,6 +279,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'maintenance',
     location: 'NWESD-II Office Cluster',
     completionPercentage: 100,
+    impact: 'Public infra upkeep',
   },
   {
     id: 'proj_nwesd2_micro_001',
@@ -274,6 +293,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'maintenance',
     location: 'NWESD-II Multi-Service Cluster',
     completionPercentage: 100,
+    impact: 'Emergency ops ready',
   },
   {
     id: 'proj_kmv_power_002',
@@ -287,6 +307,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'maintenance',
     location: 'Keshav Maha Vidyalaya',
     completionPercentage: 100,
+    impact: 'Education reliability',
   },
   {
     id: 'proj_sarvodaya_playground_001',
@@ -300,6 +321,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'facility_upgrade',
     location: 'Sarvodaya Vidyalaya East Punjabi Bagh',
     completionPercentage: 85,
+    impact: '1k+ students health',
   },
   {
     id: 'proj_skv_punjabibagh_003',
@@ -313,6 +335,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'renovation',
     location: 'SKV Punjabi Bagh No.2',
     completionPercentage: 70,
+    impact: '2k+ girls education',
   },
   {
     id: 'proj_eastroad_restoration_004',
@@ -327,6 +350,7 @@ export const enhancedProjects: EnhancedProject[] = [
     location: 'East Road Division M-212',
     division: 'M-212',
     completionPercentage: 55,
+    impact: 'Multi-street repairs',
   },
   {
     id: 'proj_jail10_water_005',
@@ -340,6 +364,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'maintenance',
     location: 'Central Jail No. 10 Rohini',
     completionPercentage: 50,
+    impact: 'Facility water supply',
   },
   {
     id: 'proj_seelampur_lighting_006',
@@ -353,6 +378,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'installation',
     location: 'Ghonda Chowk to Maujpur Chowk',
     completionPercentage: 100,
+    impact: '100k+ safer nights',
   },
   {
     id: 'proj_sgmh_coldroom_007',
@@ -366,6 +392,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'installation',
     location: 'Sanjay Gandhi Memorial Hospital',
     completionPercentage: 100,
+    impact: 'Medical supplies safety',
   },
   {
     id: 'proj_bjrm_ups_008',
@@ -380,6 +407,7 @@ export const enhancedProjects: EnhancedProject[] = [
     location: 'BJRM Hospital',
     priority: 'high_value',
     completionPercentage: 80,
+    impact: 'Critical patient care',
   },
   {
     id: 'proj_srhc_etp_009',
@@ -393,6 +421,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'maintenance',
     location: 'SRHC Hospital',
     completionPercentage: 100,
+    impact: 'Eco-friendly disposal',
   },
 
   // MAJOR PROJECTS
@@ -409,6 +438,7 @@ export const enhancedProjects: EnhancedProject[] = [
     location: 'Pragati Maidan (Bharat Mandapam, New Delhi)',
     priority: 'high_value',
     completionPercentage: 100,
+    impact: '1M+ impact',
   },
   {
     id: 'proj_pragati_tunnel_011',
@@ -423,6 +453,7 @@ export const enhancedProjects: EnhancedProject[] = [
     location: 'Ring Road (ITO) ↔ India Gate Tunnel',
     priority: 'high_value',
     completionPercentage: 100,
+    impact: '150k+ daily commutes',
   },
   {
     id: 'proj_pragati_underpasses_012',
@@ -437,6 +468,7 @@ export const enhancedProjects: EnhancedProject[] = [
     location: 'Pragati Maidan Underpasses (Mathura Rd & Bhairon Marg)',
     priority: 'high_value',
     completionPercentage: 85,
+    impact: 'Seamless city flow',
   },
   {
     id: 'proj_kartavya_path_013',
@@ -451,6 +483,7 @@ export const enhancedProjects: EnhancedProject[] = [
     location: 'New Parliament Building (Central Vista)',
     priority: 'high_value',
     completionPercentage: 100,
+    impact: 'National symbol',
   },
   {
     id: 'proj_pragati_skywalk_014',
@@ -464,6 +497,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'installation',
     location: 'Pragati Maidan Metro Station (Blue Line)',
     completionPercentage: 100,
+    impact: '50k+ metro walkers',
   },
   {
     id: 'proj_delhi_secretariat_av_001',
@@ -477,6 +511,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'maintenance',
     location: 'Delhi Secretariat (Sachivalaya), New Delhi',
     completionPercentage: 90,
+    impact: 'Govt ops seamless',
   },
   {
     id: 'proj_delhi_secretariat_ro_002',
@@ -490,6 +525,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'maintenance',
     location: 'Delhi Secretariat (Sachivalaya), New Delhi',
     completionPercentage: 85,
+    impact: 'Staff health tech',
   },
   {
     id: 'proj_delhi_secretariat_fire_003',
@@ -503,6 +539,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'maintenance',
     location: 'Delhi Secretariat (Sachivalaya), New Delhi',
     completionPercentage: 80,
+    impact: 'Life safety systems',
   },
   {
     id: 'proj_delhi_secretariat_bms_004',
@@ -516,6 +553,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'maintenance',
     location: 'Delhi Secretariat (Sachivalaya), New Delhi',
     completionPercentage: 88,
+    impact: 'Facility security',
   },
   {
     id: 'proj_delhi_secretariat_tv_005',
@@ -529,6 +567,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'installation',
     location: 'Delhi Secretariat (Sachivalaya), New Delhi',
     completionPercentage: 92,
+    impact: 'Info accessibility',
   },
   {
     id: 'proj_delhi_secretariat_cooling_006',
@@ -542,6 +581,7 @@ export const enhancedProjects: EnhancedProject[] = [
     type: 'maintenance',
     location: 'Delhi Secretariat (Sachivalaya), New Delhi',
     completionPercentage: 75,
+    impact: 'Climate control',
   },
 ]
 
