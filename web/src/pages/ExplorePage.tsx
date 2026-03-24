@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { motion, type PanInfo, AnimatePresence } from 'framer-motion'
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -10,7 +11,7 @@ import { useExploration } from '../context/ExplorationContext'
 import { useAuth } from '../context/AuthContext'
 import { useModal } from '../context/ModalContext'
 import type { EnhancedProject } from '../data/projectsEnhanced'
-import { MapPin, CheckCircle, Bell, MapPinIcon, Users, Lightbulb, Plus, X, Camera } from 'lucide-react'
+import { MapPin, CheckCircle, Bell, MapPinIcon, Users, Lightbulb, Plus, X, Camera, ChevronUp } from 'lucide-react'
 import { enhanceProjectDescription } from '../lib/llm'
 
 const GEOFENCE_RADIUS_KM = 0.5
@@ -53,6 +54,7 @@ export function ExplorePage() {
   const [watchId, setWatchId] = useState<number | null>(null)
   const [showPermissions, setShowPermissions] = useState(!allExplorePermissionsGranted)
   const [enhancedContent, setEnhancedContent] = useState<string>('')
+  const [showDescription, setShowDescription] = useState(true)
 
   // Auto-hide permission section when both enabled
   useEffect(() => {
@@ -60,6 +62,20 @@ export function ExplorePage() {
       setShowPermissions(false)
     }
   }, [locationAllowed, notificationsAllowed])
+
+  // Show description when new project is selected
+  useEffect(() => {
+    if (selectedProjectId) {
+      setShowDescription(true)
+    }
+  }, [selectedProjectId])
+
+  // Auto-hide description card and button when AR or Post modals open (like navbar behavior)
+  useEffect(() => {
+    if (isARModalOpen || isCreatePostOpen) {
+      setShowDescription(false)
+    }
+  }, [isARModalOpen, isCreatePostOpen])
 
   // Auto-mark projects in geofence
   useEffect(() => {
@@ -85,12 +101,26 @@ export function ExplorePage() {
     enhance()
   }, [selectedProject])
 
+  const autoEnabledRef = useRef(false)
+
+  // Auto-enable location tracking when page loads if location permission already granted
+  useEffect(() => {
+    if (!autoEnabledRef.current && locationAllowed) {
+      autoEnabledRef.current = true
+      enableLocation()
+    }
+  }, [locationAllowed])
+
   const handleCreatePost = () => {
     if (!user) {
       navigate('/profile')
     } else {
       openCreatePost()
     }
+  }
+
+  const closeCard = () => {
+    setShowDescription(false)
   }
 
   const handleARCamera = async () => {
@@ -170,183 +200,276 @@ export function ExplorePage() {
   }, [watchId])
 
   return (
-    <section className="space-y-0 pb-32 bg-white">
+    <section className="relative w-full h-screen bg-stone-50 overflow-hidden">
       {/* HEADER */}
-      <header className="sticky top-0 z-40 bg-white border-b border-stone-100 px-6 py-4">
+      <header className="absolute top-0 left-0 right-0 z-10 bg-white/80 backdrop-blur-md border-b border-stone-100 px-6 py-4">
         <h1 className="text-xl font-black text-[#451a03] uppercase tracking-tighter">
           Explore
         </h1>
       </header>
 
-      {/* PERMISSION TOGGLES - Only shown if not both enabled */}
-      {showPermissions && !allExplorePermissionsGranted && (
-        <div className="px-6 pt-4 pb-4 bg-gradient-to-b from-orange-50 to-white border-b border-orange-100 space-y-3">
-          <p className="text-sm font-bold text-[#451a03]">Enable Permissions</p>
+      {/* FULL SCREEN MAP - Curved boundaries, 75% height */}
+      <div className="absolute top-16 left-4 right-4 z-0 rounded-3xl overflow-hidden shadow-lg" style={{ height: '75vh' }}>
+        <MapContainer
+          center={userPosition}
+          zoom={selectedProject ? 14 : 13}
+          className="w-full h-full"
+          key={`${userPosition[0]}-${userPosition[1]}`}
+          zoomControl={true}
+        >
+          <TileLayer
+            attribution='&copy; OpenStreetMap contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
 
-          {/* Location Toggle */}
-          <button
-            onClick={locationAllowed ? disableLocation : enableLocation}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all"
-            style={{
-              backgroundColor: locationAllowed ? '#dbeafe' : '#fff',
-              borderColor: locationAllowed ? '#0ea5e9' : '#e5e7eb',
-            }}
+          {/* User Position - Always visible with pulsing effect */}
+          <Marker
+            position={userPosition}
+            icon={L.divIcon({
+              className: 'user-marker',
+              html: `<div style="
+                background-color: #3b82f6;
+                border: 3px solid white;
+                box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.2), 0 4px 12px rgba(0,0,0,0.25);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                color: white;
+                font-size: 18px;
+                animation: pulse 2s infinite;
+              ">
+                📍
+              </div>
+              <style>
+                @keyframes pulse {
+                  0%, 100% { transform: scale(1); }
+                  50% { transform: scale(1.1); }
+                }
+              </style>`,
+              iconSize: [40, 40],
+              iconAnchor: [20, 20],
+              popupAnchor: [0, -20],
+            })}
           >
-            <MapPin size={20} className={locationAllowed ? 'text-blue-600' : 'text-gray-400'} />
-            <div className="flex-1 text-left">
-              <p className="text-xs font-bold text-gray-900">Location</p>
-              <p className="text-[11px] text-gray-500">{locationAllowed ? '✓ Enabled' : 'Tap to enable'}</p>
-            </div>
-            {locationAllowed && <CheckCircle size={18} className="text-green-600" />}
-          </button>
+            <Popup className="font-bold">📍 Your Current Location</Popup>
+          </Marker>
 
-          {/* Notification Toggle */}
-          <button
-            onClick={enableNotifications}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all"
-            style={{
-              backgroundColor: notificationsAllowed ? '#dbeafe' : '#fff',
-              borderColor: notificationsAllowed ? '#0ea5e9' : '#e5e7eb',
-            }}
-          >
-            <Bell size={20} className={notificationsAllowed ? 'text-blue-600' : 'text-gray-400'} />
-            <div className="flex-1 text-left">
-              <p className="text-xs font-bold text-gray-900">Notifications</p>
-              <p className="text-[11px] text-gray-500">{notificationsAllowed ? '✓ Enabled' : 'Tap to enable'}</p>
-            </div>
-            {notificationsAllowed && <CheckCircle size={18} className="text-green-600" />}
-          </button>
-
-          {statusMessage && (
-            <div className="text-xs font-semibold text-orange-700 bg-orange-100 rounded-xl px-3 py-2">
-              {statusMessage}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* MAP SECTION - visible when permissions granted */}
-      {allExplorePermissionsGranted && (
-        <div className="mt-4 rounded-3xl overflow-hidden border-2 border-stone-200 shadow-sm mx-4" style={{ height: '70vh' }}>
-          <MapContainer
-            center={selectedProject ? [selectedProject.lat, selectedProject.lng] : userPosition}
-            zoom={selectedProject ? 14 : 13}
-            className="w-full h-full z-10"
-            key={`${userPosition[0]}-${userPosition[1]}`}
-          >
-            <TileLayer
-              attribution='&copy; OpenStreetMap contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-
-            {/* User Position */}
+          {/* Project Markers */}
+          {enhancedProjects.map((project) => (
             <Marker
-              position={userPosition}
-              icon={L.divIcon({
-                className: 'user-marker',
-                html: '<div style="background-color: #3b82f6; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; border-radius: 50%; width: 40px; height: 40px; color: white; font-size: 18px;">📍</div>',
-                iconSize: [40, 40],
-                iconAnchor: [20, 20],
-              })}
+              key={project.id}
+              position={[project.lat, project.lng]}
+              icon={markerIconForProject(project, isExplored(project.id))}
             >
-              <Popup>Your location</Popup>
+              <Popup>
+                <div className="space-y-2 text-sm max-w-xs">
+                  <p className="font-bold">{project.name}</p>
+                  <p className="text-xs text-gray-600">{project.location}</p>
+                  <p className="text-xs capitalize font-semibold text-orange-600">{project.status}</p>
+                </div>
+              </Popup>
             </Marker>
+          ))}
+        </MapContainer>
+      </div>
 
-            {/* Project Markers */}
-            {enhancedProjects.map((project) => (
-              <Marker
-                key={project.id}
-                position={[project.lat, project.lng]}
-                icon={markerIconForProject(project, isExplored(project.id))}
-              >
-                <Popup>
-                  <div className="space-y-2 text-sm max-w-xs">
-                    <p className="font-bold">{project.name}</p>
-                    <p className="text-xs text-gray-600">{project.location}</p>
-                    <p className="text-xs capitalize font-semibold text-orange-600">{project.status}</p>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
-        </div>
-      )}
+      {/* PERMISSIONS OVERLAY - shown over map if needed */}
+      {showPermissions && !allExplorePermissionsGranted && (
+        <div className="absolute inset-0 z-[60] bg-black/30 backdrop-blur-sm flex items-center justify-center px-4">
+          <div className="bg-white rounded-3xl p-6 max-w-sm space-y-4">
+            <div>
+              <h2 className="text-lg font-black text-[#451a03]">Enable Permissions</h2>
+              <p className="text-xs text-gray-500 mt-1">To explore projects and get notifications</p>
+            </div>
 
-      {/* SELECTED PROJECT DETAIL CARD - Only shown when coming from search */}
-      {selectedProject && allExplorePermissionsGranted && isFromSearchNav && (
-        <div className="px-6 py-8">
-          <div className="rounded-3xl border-2 border-stone-200 bg-gradient-to-br from-orange-50 to-white p-6 shadow-sm space-y-4">
-            <div className="flex items-start gap-4">
-              <div className="text-3xl">📍</div>
-              <div className="flex-1">
-                <h2 className="text-lg font-black text-[#451a03] tracking-tighter uppercase">{selectedProject.name}</h2>
-                <p className="text-xs text-gray-600 font-semibold">{selectedProject.location}</p>
+            {/* Location Toggle */}
+            <button
+              onClick={locationAllowed ? disableLocation : enableLocation}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all"
+              style={{
+                backgroundColor: locationAllowed ? '#dbeafe' : '#fff',
+                borderColor: locationAllowed ? '#0ea5e9' : '#e5e7eb',
+              }}
+            >
+              <MapPin size={20} className={locationAllowed ? 'text-blue-600' : 'text-gray-400'} />
+              <div className="flex-1 text-left">
+                <p className="text-xs font-bold text-gray-900">Location</p>
+                <p className="text-[11px] text-gray-500">{locationAllowed ? '✓ Enabled' : 'Tap to enable'}</p>
               </div>
-              {isExplored(selectedProject.id) && <CheckCircle size={24} className="text-green-600 flex-shrink-0" />}
-            </div>
+              {locationAllowed && <CheckCircle size={18} className="text-green-600" />}
+            </button>
 
-            {/* Status & Progress */}
-            <div className="flex gap-2 flex-wrap">
-              <span className={`text-xs font-bold px-3 py-1 rounded-full capitalize ${
-                selectedProject.status === 'completed' ? 'bg-green-100 text-green-700' :
-                selectedProject.status === 'ongoing' ? 'bg-orange-100 text-orange-700' :
-                'bg-blue-100 text-blue-700'
-              }`}>
-                {selectedProject.status}
-              </span>
-              {selectedProject.completionPercentage && (
-                <span className="text-xs font-bold bg-blue-100 text-blue-700 px-3 py-1 rounded-full">
-                  {selectedProject.completionPercentage}% Complete
-                </span>
-              )}
-            </div>
-
-            {/* Description with Enhancement */}
-            <div className="space-y-2">
-              <p className="text-sm text-gray-800">{selectedProject.longDescription || selectedProject.description}</p>
-              {enhancedContent && enhancedContent !== selectedProject.description && (
-                <p className="text-sm text-gray-700 italic border-l-4 border-orange-400 pl-3 bg-orange-50 py-2 rounded">
-                  💡 {enhancedContent}
-                </p>
-              )}
-            </div>
-
-            {/* Metadata */}
-            <div className="grid grid-cols-3 gap-3 pt-3 border-t border-stone-200">
-              <div className="text-center">
-                <MapPinIcon size={16} className="text-orange-600 mx-auto mb-1" />
-                <p className="text-xs font-bold text-gray-700">{selectedProject.type || 'Project'}</p>
+            {/* Notification Toggle */}
+            <button
+              onClick={enableNotifications}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all"
+              style={{
+                backgroundColor: notificationsAllowed ? '#dbeafe' : '#fff',
+                borderColor: notificationsAllowed ? '#0ea5e9' : '#e5e7eb',
+              }}
+            >
+              <Bell size={20} className={notificationsAllowed ? 'text-blue-600' : 'text-gray-400'} />
+              <div className="flex-1 text-left">
+                <p className="text-xs font-bold text-gray-900">Notifications</p>
+                <p className="text-[11px] text-gray-500">{notificationsAllowed ? '✓ Enabled' : 'Tap to enable'}</p>
               </div>
-              <div className="text-center">
-                <Users size={16} className="text-blue-600 mx-auto mb-1" />
-                <p className="text-xs font-bold text-gray-700">{selectedProject.impact || '~100k impact'}</p>
-              </div>
-              <div className="text-center">
-                <Lightbulb size={16} className="text-yellow-600 mx-auto mb-1" />
-                <p className="text-xs font-bold text-gray-700">Key Project</p>
-              </div>
-            </div>
+              {notificationsAllowed && <CheckCircle size={18} className="text-green-600" />}
+            </button>
 
-            {/* Actions */}
-            <div className="flex gap-2 pt-3 border-t border-stone-200">
-              <button
-                onClick={handleARCamera}
-                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-xl text-sm transition-colors active:scale-95 flex items-center justify-center gap-2"
-              >
-                <Camera size={16} strokeWidth={2.5} />
-                AR View
-              </button>
-              <button
-                onClick={handleCreatePost}
-                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded-xl text-sm transition-colors active:scale-95 flex items-center justify-center gap-2"
-              >
-                <Plus size={16} strokeWidth={2.5} />
-                Create Post
-              </button>
-            </div>
+            {statusMessage && (
+              <div className="text-xs font-semibold text-orange-700 bg-orange-100 rounded-xl px-3 py-2">
+                {statusMessage}
+              </div>
+            )}
           </div>
         </div>
       )}
+
+      {/* VIEW DESCRIPTION BUTTON - when card is closed (hidden when AR/Post modals open) */}
+      <AnimatePresence>
+        {selectedProject && !showDescription && !isARModalOpen && !isCreatePostOpen && (
+          <motion.div 
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-28 inset-x-0 z-[70] flex justify-center px-4"
+          >
+            <button
+              onClick={() => setShowDescription(true)}
+              className="bg-[#451a03] text-white px-8 py-4 rounded-full font-black text-[11px] uppercase tracking-[0.2em] flex items-center gap-3 shadow-[0_15px_35px_rgba(69,26,3,0.4)] border-2 border-white/20 active:scale-95 transition-transform"
+            >
+              <ChevronUp size={18} className="animate-bounce" />
+              View Description
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* DESCRIPTION BOTTOM SHEET MODAL - Instagram style (hidden when AR/Post modals open) */}
+      <AnimatePresence>
+        {selectedProject && allExplorePermissionsGranted && isFromSearchNav && showDescription && !isARModalOpen && !isCreatePostOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeCard}
+              className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-[80]"
+            />
+
+            <div className="fixed inset-x-0 bottom-0 z-[100] flex justify-center px-4 pointer-events-none">
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: '0%' }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                drag="y"
+                dragConstraints={{ top: 0 }}
+                dragElastic={0.1}
+                onDragEnd={(_: any, info: PanInfo) => {
+                  if (info.offset.y > 150 || info.velocity.y > 500) {
+                    closeCard()
+                  }
+                }}
+                className="w-full max-w-md bg-white rounded-t-[40px] shadow-[0_-12px_40px_rgba(0,0,0,0.15)] border-t border-stone-200 pointer-events-auto touch-none flex flex-col max-h-[85vh]"
+              >
+                {/* DRAG HANDLE */}
+                <div className="flex justify-center pt-4 pb-6">
+                  <div className="w-12 h-1.5 bg-stone-300 rounded-full opacity-50" />
+                </div>
+
+                <div className="px-6 pb-12 overflow-y-auto custom-scrollbar">
+                  {/* Header with close button */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-orange-50 rounded-2xl border border-orange-100">
+                        <MapPinIcon size={24} className="text-orange-600" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-black text-[#451a03] leading-none tracking-tight uppercase">
+                          {selectedProject.name}
+                        </h2>
+                        <p className="text-[11px] text-stone-500 font-bold uppercase tracking-widest mt-1.5">
+                          {selectedProject.location}
+                        </p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={closeCard}
+                      className="p-2 bg-stone-100 rounded-full text-stone-400"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  {/* Status badge */}
+                  <div className="flex gap-2 mb-6">
+                    <span className={`text-[10px] font-black px-4 py-2 rounded-xl border uppercase ${
+                      selectedProject.status === 'completed' ? 'bg-green-50 text-green-700 border-green-100' :
+                      selectedProject.status === 'ongoing' ? 'bg-orange-50 text-orange-700 border-orange-100' :
+                      'bg-blue-50 text-blue-700 border-blue-100'
+                    }`}>
+                      ● {selectedProject.status}
+                    </span>
+                    {selectedProject.completionPercentage && (
+                      <span className="text-[10px] font-black bg-blue-50 text-blue-700 px-4 py-2 rounded-xl border border-blue-100 uppercase">
+                        {selectedProject.completionPercentage}% Complete
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Description with enhancement */}
+                  <div className="bg-stone-50/80 rounded-[32px] p-6 border border-stone-100 mb-8">
+                    <p className="text-sm leading-relaxed text-stone-700 font-medium">
+                      {selectedProject.longDescription || selectedProject.description}
+                    </p>
+                    {enhancedContent && enhancedContent !== selectedProject.description && (
+                      <p className="text-sm text-stone-600 italic border-l-4 border-orange-400 pl-3 bg-orange-50 py-2 rounded mt-4">
+                        💡 {enhancedContent}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* QUICK STATS */}
+                  <div className="grid grid-cols-3 gap-3 mb-8">
+                    <div className="bg-white border border-stone-100 p-4 rounded-3xl text-center">
+                      <MapPinIcon size={18} className="text-orange-600 flex justify-center mx-auto mb-2" />
+                      <p className="text-[9px] font-black text-stone-800 uppercase tracking-tighter">{selectedProject.type || 'Project'}</p>
+                    </div>
+                    <div className="bg-white border border-stone-100 p-4 rounded-3xl text-center">
+                      <Users size={18} className="text-blue-600 flex justify-center mx-auto mb-2" />
+                      <p className="text-[9px] font-black text-stone-800 uppercase tracking-tighter">{selectedProject.impact || '100K+'}</p>
+                    </div>
+                    <div className="bg-white border border-stone-100 p-4 rounded-3xl text-center">
+                      <Lightbulb size={18} className="text-yellow-600 flex justify-center mx-auto mb-2" />
+                      <p className="text-[9px] font-black text-stone-800 uppercase tracking-tighter">KEY</p>
+                    </div>
+                  </div>
+
+                  {/* PRIMARY ACTIONS */}
+                  <div className="flex gap-3 sticky bottom-0 bg-white pt-2">
+                    <button 
+                      onClick={handleARCamera}
+                      className="flex-[1.4] bg-[#451a03] text-white font-bold py-5 rounded-2xl text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-orange-900/20"
+                    >
+                      <Camera size={20} /> AR View
+                    </button>
+                    <button 
+                      onClick={handleCreatePost}
+                      className="flex-1 bg-white border-2 border-stone-200 text-stone-800 font-bold py-5 rounded-2xl text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95"
+                    >
+                      <Plus size={20} /> Post
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* AR CAMERA MODAL */}
       {isARModalOpen && selectedProject && (

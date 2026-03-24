@@ -4,20 +4,20 @@ import { Timer, MapPin, ChevronRight } from "lucide-react";
 
 const SLIDES = [
   {
+    image: "https://images.unsplash.com/photo-15581094271901-8022df4466f9?q=80&w=2000",
+    title: "Signature Bridge Phase II",
+    description: "Cabling and load testing of the secondary pylon.",
+    tag: "Civil Works",
+    status: "On Track",
+    location: "Wazirabad"
+  },
+  {
     image: "https://images.unsplash.com/photo-1562601509-376518335492?q=80&w=2000",
     title: "Modern Metro Expansion",
     description: "Phase 4 tunneling progress and structural monitoring.",
     tag: "Mass Transit",
     status: "85% Complete",
     location: "New Delhi"
-  },
-  {
-    image: "https://images.unsplash.com/photo-1581094271901-8022df4466f9?q=80&w=2000",
-    title: "Signature Bridge Phase II",
-    description: "Cabling and load testing of the secondary pylon.",
-    tag: "Civil Works",
-    status: "On Track",
-    location: "Wazirabad"
   },
   {
     image: "https://images.unsplash.com/photo-1545459720-aac273a27765?q=80&w=2000",
@@ -80,11 +80,6 @@ export function HomePage() {
             className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${currentIndex === i ? "opacity-100 z-10" : "opacity-0 z-0"}`}
           >
             {/* Ken Burns Effect (Slow Zoom) */}
-            <img
-              src={slide.image}
-              className={`h-full w-full object-cover brightness-[0.6] transition-transform duration-[5000ms] ease-linear ${currentIndex === i ? "scale-110" : "scale-100"}`}
-              alt="Project"
-            />
             
             {/* Overlay Gradient */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#451a03] via-[#451a03]/20 to-transparent" />
