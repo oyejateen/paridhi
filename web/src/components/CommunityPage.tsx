@@ -11,7 +11,9 @@ import {
   Construction, 
   Droplets,
   ThumbsUp,
-  ThumbsDown
+  ThumbsDown,
+  Camera,
+  X
 } from "lucide-react";
 import { db } from '../lib/firebase'
 import { useAuth } from '../context/AuthContext'
@@ -25,6 +27,7 @@ interface Post {
   upvotes?: number
   downvotes?: number
   score?: number
+  imageData?: string
   createdAt?: any
   authorName?: string
   authorId?: string
@@ -296,14 +299,27 @@ function PostCard({ post }: { post: Post }) {
   }
 
   return (
-    <div className="bg-white rounded-3xl border border-black/5 p-5 space-y-3 hover:border-orange-200 transition-all">
-      {/* Header: Author & Category */}
-      <div className="flex justify-between items-start">
-        <div>
-          <p className="text-xs font-black text-[#451a03] uppercase">{post.authorName || 'Citizen'}</p>
-          <p className="text-[10px] text-stone-400">{post.category || 'General'} • {timeAgo(post.createdAt)}</p>
+    <div className={`bg-white rounded-3xl border border-black/5 overflow-hidden hover:border-orange-200 transition-all ${post.imageData ? 'space-y-0' : 'p-5 space-y-3'}`}>
+      {/* Image - If present, show at top */}
+      {post.imageData && (
+        <div className="relative w-full h-48 bg-stone-200 overflow-hidden">
+          <img 
+            src={post.imageData} 
+            alt="Post image" 
+            className="w-full h-full object-cover hover:scale-105 transition-transform"
+          />
         </div>
-        <span className="px-2.5 py-1 bg-orange-50 text-orange-600 text-[9px] font-black rounded-lg">
+      )}
+
+      {/* Content Section */}
+      <div className={post.imageData ? 'p-5 space-y-3' : ''}>
+        {/* Header: Author & Category */}
+        <div className="flex justify-between items-start">
+          <div>
+            <p className="text-xs font-black text-[#451a03] uppercase">{post.authorName || 'Citizen'}</p>
+            <p className="text-[10px] text-stone-400">{post.category || 'General'} • {timeAgo(post.createdAt)}</p>
+          </div>
+          <span className="px-2.5 py-1 bg-orange-50 text-orange-600 text-[9px] font-black rounded-lg">
           {post.category || 'Update'}
         </span>
       </div>
@@ -339,6 +355,7 @@ function PostCard({ post }: { post: Post }) {
           <span>{votes.down}</span>
         </button>
       </div>
+      </div>
     </div>
   )
 }
@@ -349,6 +366,8 @@ function CreatePostModal({ onClose, userId, userName }: { onClose: () => void, u
   const [selectedProject, setSelectedProject] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Roads')
   const [submitting, setSubmitting] = useState(false)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   const projects = [
     { id: 'project-1', name: 'NH-44 Flyover Expansion' },
@@ -357,6 +376,33 @@ function CreatePostModal({ onClose, userId, userName }: { onClose: () => void, u
     { id: 'project-20', name: 'Smart City Initiative' },
     { id: 'project-30', name: 'Transport Hub' },
   ]
+
+  const handleImageCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image must be less than 5MB')
+        return
+      }
+      
+      setImageFile(file)
+      
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+      console.log('📸 Image captured:', file.name)
+    }
+  }
+
+  const removeImage = () => {
+    setImageFile(null)
+    setImagePreview(null)
+    console.log('❌ Image removed')
+  }
 
   const handleSubmit = async () => {
     if (!content.trim()) {
@@ -378,15 +424,16 @@ function CreatePostModal({ onClose, userId, userName }: { onClose: () => void, u
         throw new Error('Firestore not initialized')
       }
       
-      console.log('📝 Creating post...', { content, selectedProject, selectedCategory, userId, userName })
+      console.log('📝 Creating post...', { content, selectedProject, selectedCategory, userId, userName, hasImage: !!imagePreview })
       
-      // Save post to Firestore with authorId required by security rules
+      // Save post to Firestore with optional base64 image data
       await addDoc(collection(db, 'posts'), {
         authorId: userId,
         authorName: userName,
         content: content.trim(),
         projectId: selectedProject,
         category: selectedCategory,
+        imageData: imagePreview || null,
         upvotes: 0,
         downvotes: 0,
         status: 'active',
@@ -397,6 +444,8 @@ function CreatePostModal({ onClose, userId, userName }: { onClose: () => void, u
       setContent('')
       setSelectedProject('')
       setSelectedCategory('Roads')
+      setImageFile(null)
+      setImagePreview(null)
       onClose()
     } catch (error) {
       console.error('❌ Error creating post:', error)
@@ -467,6 +516,47 @@ function CreatePostModal({ onClose, userId, userName }: { onClose: () => void, u
             rows={5}
           />
           <p className="text-[10px] text-stone-400">{content.length}/500</p>
+        </div>
+
+        {/* Image Capture (Optional) */}
+        <div className="space-y-2">
+          <label className="text-xs font-black text-[#451a03] uppercase">📸 Capture Image (Optional)</label>
+          <div className="flex gap-2">
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleImageCapture}
+              disabled={submitting}
+              className="hidden"
+              id="imageInput"
+            />
+            <label 
+              htmlFor="imageInput"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border-2 border-dashed border-orange-300 bg-orange-50 text-orange-700 font-black text-xs uppercase cursor-pointer hover:bg-orange-100 transition-all active:scale-95 disabled:opacity-50"
+            >
+              <Camera size={16} strokeWidth={3} />
+              {imageFile ? imageFile.name.substring(0, 20) : 'Capture / Upload'}
+            </label>
+          </div>
+
+          {/* Image Preview */}
+          {imagePreview && (
+            <div className="relative rounded-2xl overflow-hidden bg-stone-100 border-2 border-orange-200">
+              <img 
+                src={imagePreview} 
+                alt="Preview" 
+                className="w-full h-48 object-cover"
+              />
+              <button
+                onClick={removeImage}
+                className="absolute top-2 right-2 p-2 bg-red-500 hover:bg-red-600 text-white rounded-full transition-all active:scale-90"
+                type="button"
+              >
+                <X size={16} strokeWidth={3} />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Buttons */}
