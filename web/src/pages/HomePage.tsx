@@ -114,7 +114,13 @@ export function HomePage() {
                     <Timer size={14} strokeWidth={3} />
                     <span className="text-[10px] font-black uppercase">{slide.status}</span>
                   </div>
-                  <button className="h-8 w-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/20">
+                  <button 
+                    className="h-8 w-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/20"
+                    onClick={() => {
+                      setCurrentIndex((idx) => (idx === SLIDES.length - 1 ? 0 : idx + 1));
+                      setProgress(0);
+                    }}
+                  >
                     <ChevronRight size={18} />
                   </button>
                 </div>
@@ -141,9 +147,9 @@ export function HomePage() {
       {/* 2. LIVE STATS BAR */}
       <div className="mx-4 mt-6 grid grid-cols-3 gap-3">
         {[
-          { label: "Active Sites", value: "1,240", icon: "🏗️" },
-          { label: "Delivered", value: "450", icon: "✅" },
-          { label: "Budget Used", value: "₹12k Cr", icon: "💰" }
+          { label: "Active Sites", value: "31,213", icon: "🏗️" },
+          { label: "Delivered", value: "1,264", icon: "✅" },
+          { label: "Budget Used", value: "₹11,688 Cr", icon: "💰" }
         ].map((stat, i) => (
           <div key={i} className="bg-white p-4 rounded-3xl border border-orange-100 shadow-sm flex flex-col items-center text-center">
             <span className="text-[18px] mb-1">{stat.icon}</span>

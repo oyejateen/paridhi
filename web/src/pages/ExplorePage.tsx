@@ -319,7 +319,7 @@ export function ExplorePage() {
               </div>
               <div className="text-center">
                 <Users size={16} className="text-blue-600 mx-auto mb-1" />
-                <p className="text-xs font-bold text-gray-700">~100k impact</p>
+                <p className="text-xs font-bold text-gray-700">{selectedProject.impact || '~100k impact'}</p>
               </div>
               <div className="text-center">
                 <Lightbulb size={16} className="text-yellow-600 mx-auto mb-1" />
