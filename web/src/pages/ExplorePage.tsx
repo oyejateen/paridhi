@@ -4,7 +4,7 @@ import { motion, type PanInfo, AnimatePresence } from 'framer-motion'
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { requestPushToken } from '../lib/firebase'
+import { requestPushToken, db } from '../lib/firebase'
 import { enhancedProjects, calculateDistance, getProjectById } from '../data/projectsEnhanced'
 import { usePermissions } from '../context/PermissionsContext'
 import { useExploration } from '../context/ExplorationContext'
@@ -13,6 +13,7 @@ import { useModal } from '../context/ModalContext'
 import type { EnhancedProject } from '../data/projectsEnhanced'
 import { MapPin, CheckCircle, Bell, MapPinIcon, Users, Lightbulb, Plus, X, Camera, ChevronUp } from 'lucide-react'
 import { enhanceProjectDescription } from '../lib/llm'
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
 
 const GEOFENCE_RADIUS_KM = 0.5
 const LOCATION_CHECK_INTERVAL = 5000
@@ -531,6 +532,7 @@ export function ExplorePage() {
 function CreatePostModalForProject({ 
   project, 
   onClose,
+  userId,
   userName 
 }: { 
   project: EnhancedProject
@@ -540,6 +542,35 @@ function CreatePostModalForProject({
 }) {
   const [content, setContent] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+
+  const handleImageCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image must be less than 5MB')
+        return
+      }
+      
+      setImageFile(file)
+      
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+      console.log('📸 Image captured:', file.name)
+    }
+  }
+
+  const removeImage = () => {
+    setImageFile(null)
+    setImagePreview(null)
+    console.log('❌ Image removed')
+  }
 
   const handleSubmit = async () => {
     if (!content.trim()) {
@@ -547,18 +578,78 @@ function CreatePostModalForProject({
       return
     }
 
+    if (content.trim().length < 4) {
+      alert('Feedback must be at least 4 characters')
+      return
+    }
+
     setSubmitting(true)
     try {
+      if (!db) {
+        throw new Error('Firestore not initialized')
+      }
+
+      // Map project category to post category
+      let postCategory = 'General'
+      switch (project.category) {
+        case 'Hospitals':
+          postCategory = 'Healthcare'
+          break
+        case 'Colleges':
+          postCategory = 'Smart City'
+          break
+        case 'Bridges':
+        case 'Flyovers':
+          postCategory = 'Transport'
+          break
+        case 'Metro stations':
+          postCategory = 'Transport'
+          break
+        case 'Road projects':
+          postCategory = 'Roads'
+          break
+        case 'Smart city projects':
+          postCategory = 'Smart City'
+          break
+        default:
+          postCategory = 'Roads'
+      }
+
       console.log('📝 Creating post for project...', { 
         projectName: project.name,
         projectId: project.id,
         content, 
-        userName 
+        userName,
+        postCategory,
+        hasImage: !!imagePreview
       })
-      // TODO: Save to Firestore with project pre-selected
+      
+      // Save post to Firestore with optional base64 image data
+      await addDoc(collection(db, 'posts'), {
+        authorId: userId,
+        authorName: userName,
+        content: content.trim(),
+        projectId: project.id,
+        category: postCategory,
+        imageData: imagePreview || null,
+        upvotes: 0,
+        downvotes: 0,
+        status: 'active',
+        createdAt: serverTimestamp()
+      })
+      
+      console.log('✅ Post created successfully')
+      setContent('')
+      setImageFile(null)
+      setImagePreview(null)
       onClose()
     } catch (error) {
       console.error('❌ Error creating post:', error)
+      if (error instanceof Error) {
+        alert(`Failed to create post: ${error.message}`)
+      } else {
+        alert('Failed to create post. Please try again.')
+      }
     } finally {
       setSubmitting(false)
     }
@@ -591,16 +682,57 @@ function CreatePostModalForProject({
 
         {/* Description Textarea */}
         <div className="space-y-2">
-          <label className="text-xs font-black text-[#451a03] uppercase">Your Post</label>
+          <label className="text-xs font-black text-[#451a03] uppercase">Your Feedback</label>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Share your experience with this project, what you've observed, suggestions for improvement... (like Reddit)"
             maxLength={500}
             className="w-full p-4 border-2 border-black/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm resize-none"
-            rows={6}
+            rows={5}
           />
           <p className="text-[10px] text-stone-400">{content.length}/500</p>
+        </div>
+
+        {/* Image Capture (Optional) */}
+        <div className="space-y-2">
+          <label className="text-xs font-black text-[#451a03] uppercase">📸 Capture Image (Optional)</label>
+          <div className="flex gap-2">
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleImageCapture}
+              disabled={submitting}
+              className="hidden"
+              id="imageInput"
+            />
+            <label 
+              htmlFor="imageInput"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border-2 border-dashed border-orange-300 bg-orange-50 text-orange-700 font-black text-xs uppercase cursor-pointer hover:bg-orange-100 transition-all active:scale-95 disabled:opacity-50"
+            >
+              <Camera size={16} strokeWidth={3} />
+              {imageFile ? imageFile.name.substring(0, 20) : 'Capture / Upload'}
+            </label>
+          </div>
+
+          {/* Image Preview */}
+          {imagePreview && (
+            <div className="relative rounded-2xl overflow-hidden bg-stone-100 border-2 border-orange-200">
+              <img 
+                src={imagePreview} 
+                alt="Preview" 
+                className="w-full h-48 object-cover"
+              />
+              <button
+                onClick={removeImage}
+                className="absolute top-2 right-2 p-2 bg-red-500 hover:bg-red-600 text-white rounded-full transition-all active:scale-90"
+                type="button"
+              >
+                <X size={16} strokeWidth={3} />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Buttons */}
