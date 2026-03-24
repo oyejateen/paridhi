@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Search, MapPin, Globe, ChevronRight, X } from 'lucide-react'
-import { enhancedProjects } from '../data/projectsEnhanced'
-import { filterAndSearchProjects, getCategoryEmoji } from '../lib/projectsUtils'
+import { filterAndSearchProjects } from '../lib/projectsUtils'
 
 export default function SearchPage() {
   const navigate = useNavigate()

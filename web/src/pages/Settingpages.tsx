@@ -7,9 +7,7 @@ import {
   LogOut,
   Trash2,
   ChevronRight,
-  Bell,
   ShieldCheck,
-  Globe,
   Smartphone,
 } from "lucide-react";
 

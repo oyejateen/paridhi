@@ -1,9 +1,10 @@
 import { Outlet, useLocation } from 'react-router-dom';
-import { useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { BottomNav } from './BottomNav';
 import { TopHeader } from './TopHeader';
 import { SecondaryHeader } from '../SecondaryHeader';
 import { useGeofence } from '../../hooks/useGeofence';
+import type { GeofenceEvent } from '../../lib/geofenceService';
 import { useAuth } from '../../context/AuthContext';
 import { usePermissions } from '../../context/PermissionsContext';
 import { useModal } from '../../context/ModalContext';
@@ -23,7 +24,7 @@ export function AppShell() {
   }, []);
 
   // Handle geofence events (memoized callback)
-  const handleGeofenceEvent = useCallback(async (event) => {
+  const handleGeofenceEvent = useCallback(async (event: GeofenceEvent) => {
     console.log('🚨 Geofence Event:', event);
     
     if (!user || event.type !== 'ENTER') return;
