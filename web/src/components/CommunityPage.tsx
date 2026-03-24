@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { onSnapshot, collection, query } from 'firebase/firestore'
+import { onSnapshot, collection, query, addDoc, serverTimestamp } from 'firebase/firestore'
 import { useNavigate } from "react-router-dom";
+import { useModal } from '../context/ModalContext'
 import { enhancedProjects } from '../data/projectsEnhanced'
 import { 
   Plus, 
@@ -34,10 +35,10 @@ const CATEGORIES = ['All Posts', 'Roads', 'Smart City', 'Transport', 'Healthcare
 export default function CommunityPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { isCreatePostOpen, openCreatePost, closeCreatePost } = useModal()
   const [selectedFilter, setSelectedFilter] = useState('All Posts')
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
-  const [showCreatePost, setShowCreatePost] = useState(false)
 
   useEffect(() => {
     if (!db) {
@@ -118,7 +119,7 @@ export default function CommunityPage() {
     if (!user) {
       navigate('/profile')
     } else {
-      setShowCreatePost(true)
+      openCreatePost()
     }
   }
   return (
@@ -181,9 +182,9 @@ export default function CommunityPage() {
       )}
 
       {/* 5. Create Post Modal */}
-      {showCreatePost && user && (
+      {isCreatePostOpen && user && (
         <CreatePostModal 
-          onClose={() => setShowCreatePost(false)}
+          onClose={closeCreatePost}
           userId={user.uid}
           userName={user.displayName || 'Citizen'}
         />
@@ -358,11 +359,29 @@ function CreatePostModal({ onClose, userName }: { onClose: () => void, userId?: 
 
     setSubmitting(true)
     try {
+      if (!db) {
+        throw new Error('Firestore not initialized')
+      }
+      
       console.log('📝 Creating post...', { content, selectedProject, selectedCategory, userName })
-      // TODO: Save to Firestore
+      
+      // Save post to Firestore
+      await addDoc(collection(db, 'posts'), {
+        content: content.trim(),
+        projectId: selectedProject,
+        category: selectedCategory,
+        authorName: userName,
+        upvotes: 0,
+        downvotes: 0,
+        status: 'active',
+        createdAt: serverTimestamp()
+      })
+      
+      console.log('✅ Post created successfully')
       onClose()
     } catch (error) {
       console.error('❌ Error creating post:', error)
+      alert('Failed to create post. Please try again.')
     } finally {
       setSubmitting(false)
     }

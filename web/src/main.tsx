@@ -11,9 +11,17 @@ import { ModalProvider } from './context/ModalContext'
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      await navigator.serviceWorker.register('/sw.js')
-    } catch {
-      // ignore service worker registration failures in development
+      const registration = await navigator.serviceWorker.register('/sw.js', {
+        scope: '/'
+      })
+      console.log('✅ Service Worker registered:', registration.scope)
+      
+      // Check for updates
+      setInterval(() => {
+        registration.update().catch(err => console.error('SW update error:', err))
+      }, 60000) // Check every 60 seconds
+    } catch (error) {
+      console.error('❌ Service Worker registration failed:', error)
     }
   })
 }

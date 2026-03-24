@@ -55,6 +55,12 @@ export function ExplorePage() {
   const [showPermissions, setShowPermissions] = useState(!allExplorePermissionsGranted)
   const [enhancedContent, setEnhancedContent] = useState<string>('')
   const [showDescription, setShowDescription] = useState(true)
+  const [mapCenter, setMapCenter] = useState<[number, number]>([
+    Number(import.meta.env.VITE_DEFAULT_LAT || 28.6139),
+    Number(import.meta.env.VITE_DEFAULT_LNG || 77.209),
+  ])
+  const mapRef = useRef<any>(null)
+  const firstLoadRef = useRef(true)
 
   // Auto-hide permission section when both enabled
   useEffect(() => {
@@ -108,6 +114,14 @@ export function ExplorePage() {
     if (!autoEnabledRef.current && locationAllowed) {
       autoEnabledRef.current = true
       enableLocation()
+    }
+  }, [locationAllowed])
+
+  // Center map on user location only on first load
+  useEffect(() => {
+    if (firstLoadRef.current && locationAllowed) {
+      firstLoadRef.current = false
+      setMapCenter(userPosition)
     }
   }, [locationAllowed])
 
@@ -169,6 +183,13 @@ export function ExplorePage() {
     setStatusMessage('Location disabled')
   }
 
+  function handleLocateMe() {
+    if (userPosition && mapRef.current) {
+      setMapCenter(userPosition)
+      mapRef.current.setView(userPosition, 16, { animate: true })
+    }
+  }
+
   async function enableNotifications() {
     if (!('Notification' in window)) {
       setStatusMessage('Notifications not supported')
@@ -211,11 +232,11 @@ export function ExplorePage() {
       {/* FULL SCREEN MAP - Curved boundaries, 75% height */}
       <div className="absolute top-16 left-4 right-4 z-0 rounded-3xl overflow-hidden shadow-lg" style={{ height: '75vh' }}>
         <MapContainer
-          center={userPosition}
+          center={mapCenter}
           zoom={selectedProject ? 14 : 13}
           className="w-full h-full"
-          key={`${userPosition[0]}-${userPosition[1]}`}
           zoomControl={true}
+          ref={mapRef}
         >
           <TileLayer
             attribution='&copy; OpenStreetMap contributors'
@@ -263,6 +284,11 @@ export function ExplorePage() {
               key={project.id}
               position={[project.lat, project.lng]}
               icon={markerIconForProject(project, isExplored(project.id))}
+              eventHandlers={{
+                click: () => {
+                  navigate('/explore', { state: { projectId: project.id } })
+                },
+              }}
             >
               <Popup>
                 <div className="space-y-2 text-sm max-w-xs">
@@ -274,6 +300,15 @@ export function ExplorePage() {
             </Marker>
           ))}
         </MapContainer>
+
+        {/* Locate Me Button - positioned like zoom controls */}
+        <button
+          onClick={handleLocateMe}
+          className="absolute bottom-4 right-4 bg-white rounded-lg p-3 shadow-lg hover:bg-stone-50 active:scale-95 transition-all z-[999] border border-stone-200 flex items-center justify-center"
+          title="Center map on your location"
+        >
+          <MapPin size={20} className="text-blue-600" />
+        </button>
       </div>
 
       {/* PERMISSIONS OVERLAY - shown over map if needed */}
@@ -651,13 +686,42 @@ function ARCameraModal({
           />
         )}
 
-        {/* Project Info Overlay */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <div className="bg-black/70 backdrop-blur-sm rounded-2xl p-4 text-white text-center max-w-xs">
-            <p className="text-sm font-black uppercase tracking-widest text-orange-300">AR View</p>
-            <p className="text-lg font-bold mt-2">{project.name}</p>
-            <p className="text-xs text-gray-300 mt-1">{project.location}</p>
-            <div className="text-3xl mt-3">📍</div>
+        {/* Project Info Overlay - Enhanced with full details */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-4">
+          <div className="bg-black/80 backdrop-blur-md rounded-3xl p-6 text-white text-center max-w-sm space-y-3 border border-white/20">
+            <p className="text-xs font-black uppercase tracking-widest text-orange-400">📍 AR View</p>
+            <div>
+              <p className="text-2xl font-black uppercase tracking-tight">{project.name}</p>
+              <p className="text-xs text-gray-300 mt-2">{project.location}</p>
+            </div>
+            
+            {/* Status badge */}
+            <div className="flex justify-center gap-2 flex-wrap">
+              <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase ${
+                project.status === 'completed' ? 'bg-green-500/30 text-green-200' :
+                project.status === 'ongoing' ? 'bg-orange-500/30 text-orange-200' :
+                'bg-blue-500/30 text-blue-200'
+              }`}>
+                ● {project.status}
+              </span>
+              {project.completionPercentage && (
+                <span className="text-[10px] font-black px-3 py-1 rounded-full bg-blue-500/30 text-blue-200 uppercase">
+                  {project.completionPercentage}%
+                </span>
+              )}
+            </div>
+
+            {/* Full description */}
+            <p className="text-sm leading-snug text-gray-200 bg-black/40 rounded-xl p-3">
+              {project.longDescription || project.description}
+            </p>
+
+            {/* Quick impact info */}
+            {project.impact && (
+              <div className="text-xs text-gray-300 italic border-l-2 border-orange-400 pl-2">
+                ✨ {project.impact}
+              </div>
+            )}
           </div>
         </div>
 
@@ -671,10 +735,12 @@ function ARCameraModal({
         </button>
       </div>
 
-      {/* Info Bar */}
-      <div className="bg-gradient-to-b from-black/50 to-black px-6 py-4 text-white text-center">
-        <p className="text-xs text-gray-300">Point camera at the project location</p>
-        <p className="text-sm font-bold mt-2">{project.description.substring(0, 60)}...</p>
+      {/* Info Bar - Show category and full description snippet */}
+      <div className="bg-gradient-to-b from-black/50 to-black px-6 py-4 text-white text-center border-t border-white/10">
+        <p className="text-[11px] text-orange-300 font-black uppercase tracking-widest">{project.category}</p>
+        <p className="text-xs text-gray-300 mt-2 line-clamp-2">
+          {project.longDescription || project.description}
+        </p>
       </div>
     </div>
   )
