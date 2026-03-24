@@ -99,6 +99,9 @@ export default function CommunityPage() {
           console.error('❌ Error fetching posts:', error)
           console.error('Error code:', error.code)
           console.error('Error message:', error.message)
+          if (error.code === 'permission-denied') {
+            console.error('🔴 PERMISSION DENIED: Check Firestore security rules')
+          }
           setLoading(false)
         }
       )
@@ -116,9 +119,13 @@ export default function CommunityPage() {
     : posts.filter(p => p.category === selectedFilter)
 
   const handleCreatePost = () => {
+    console.log('🔍 Create post clicked. User:', user)
     if (!user) {
+      console.warn('⚠️ No user logged in')
+      alert('Please log in to create a post')
       navigate('/profile')
     } else {
+      console.log('✅ User authenticated:', user.uid)
       openCreatePost()
     }
   }
@@ -337,7 +344,7 @@ function PostCard({ post }: { post: Post }) {
 }
 
 // ============ CREATE POST MODAL ============
-function CreatePostModal({ onClose, userName }: { onClose: () => void, userId?: string, userName: string }) {
+function CreatePostModal({ onClose, userId, userName }: { onClose: () => void, userId: string, userName: string }) {
   const [content, setContent] = useState('')
   const [selectedProject, setSelectedProject] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Roads')
@@ -352,8 +359,16 @@ function CreatePostModal({ onClose, userName }: { onClose: () => void, userId?: 
   ]
 
   const handleSubmit = async () => {
-    if (!content.trim() || !selectedProject) {
-      alert('Please fill in all fields')
+    if (!content.trim()) {
+      alert('Please enter your feedback')
+      return
+    }
+    if (content.trim().length < 4) {
+      alert('Feedback must be at least 4 characters')
+      return
+    }
+    if (!selectedProject) {
+      alert('Please select a project')
       return
     }
 
@@ -363,14 +378,15 @@ function CreatePostModal({ onClose, userName }: { onClose: () => void, userId?: 
         throw new Error('Firestore not initialized')
       }
       
-      console.log('📝 Creating post...', { content, selectedProject, selectedCategory, userName })
+      console.log('📝 Creating post...', { content, selectedProject, selectedCategory, userId, userName })
       
-      // Save post to Firestore
+      // Save post to Firestore with authorId required by security rules
       await addDoc(collection(db, 'posts'), {
+        authorId: userId,
+        authorName: userName,
         content: content.trim(),
         projectId: selectedProject,
         category: selectedCategory,
-        authorName: userName,
         upvotes: 0,
         downvotes: 0,
         status: 'active',
@@ -378,10 +394,17 @@ function CreatePostModal({ onClose, userName }: { onClose: () => void, userId?: 
       })
       
       console.log('✅ Post created successfully')
+      setContent('')
+      setSelectedProject('')
+      setSelectedCategory('Roads')
       onClose()
     } catch (error) {
       console.error('❌ Error creating post:', error)
-      alert('Failed to create post. Please try again.')
+      if (error instanceof Error) {
+        alert(`Failed to create post: ${error.message}`)
+      } else {
+        alert('Failed to create post. Please try again.')
+      }
     } finally {
       setSubmitting(false)
     }
