@@ -8,9 +8,51 @@
     <meta name="description" content="Paridhi - Gamified civic exploration across your city." />
     <link rel="manifest" href="/manifest.webmanifest" />
     <title>Paridhi</title>
+    <style>
+      /* Completely hide Google Translate widget and overlays */
+      #google_translate_element,
+      .goog-te-banner-frame,
+      .goog-te-top-frame,
+      .goog-te-gadget,
+      .goog-te-notification-popup,
+      .skiptranslate,
+      .goog-te-combo {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+      body {
+        top: 0 !important;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <!-- Google Translate Widget - Completely hidden with CSS -->
+    <div id="google_translate_element" style="position: fixed; top: -9999px; left: -9999px; width: 1px; height: 1px; z-index: -9999; display: none;"></div>
+    <script type="text/javascript">
+      window.translationInProgress = false;
+      window.googleTranslateElementInit = function() {
+        try {
+          new google.translate.TranslateElement({
+            pageLanguage: 'en',
+            includedLanguages: 'en,hi,ta,te,kn,ml,gu,mr,pa,bn,ur',
+            layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+            autoDisplay: false,
+            multilanguagePage: true
+          }, 'google_translate_element');
+          console.log('✓ Google Translate widget initialized');
+          window.googleTranslateReady = true;
+          window.dispatchEvent(new Event('googleTranslateReady'));
+          if (window.onGoogleTranslateReady) {
+            window.onGoogleTranslateReady();
+          }
+        } catch (e) {
+          console.error('Error initializing Google Translate:', e);
+        }
+      };
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { useEffect } from "react";
 import { AppShell } from "./components/layout/AppShell";
 import { AboutPage } from "./pages/AboutPage";
 import { ExplorePage } from "./pages/ExplorePage";
@@ -11,8 +12,13 @@ import { TosPage } from "./pages/TosPage";
 import SearchPage from "./pages/SearchPage";
 import Settingpages from "./pages/Settingpages";
 import NotificationsPage from "./pages/NotificationsPage";
+import { initializeLanguagePreference } from "./lib/languageTranslation";
 
 function App() {
+  // Initialize language preference on app load
+  useEffect(() => {
+    initializeLanguagePreference()
+  }, [])
   return (
     <Routes>
       <Route element={<AppShell />}>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { usePermissions } from "../context/PermissionsContext";
 import { Link } from "react-router-dom";
@@ -11,11 +11,23 @@ import {
   ChevronRight,
   Settings,
   Mail,
+  Globe,
 } from "lucide-react";
+import { SUPPORTED_LANGUAGES, changeLanguage, getStoredLanguage } from "../lib/languageTranslation";
 
 export function ProfilePage() {
   const { user, signIn, signOut, loading } = useAuth();
   const { locationAllowed, notificationsAllowed } = usePermissions();
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+
+  // Initialize language preference on mount
+  useEffect(() => {
+    const storedLang = getStoredLanguage()
+    if (storedLang) {
+      setSelectedLanguage(storedLang)
+    }
+  }, [])
 
   return (
     <div className="max-w-md mx-auto bg-[#fff7f0] min-h-screen pb-24 font-sans text-[#451a03]">
@@ -92,7 +104,53 @@ export function ProfilePage() {
           </div>
         </div>
 
-        {/* 3. SECURITY & AUTH - Google Sign In */}
+        {/* 3. LANGUAGE SELECTION */}
+        <div>
+          <h3 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-4 ml-2">
+            Language
+          </h3>
+          <div className="bg-white rounded-[32px] p-4 border border-stone-100 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                  <Globe size={16} strokeWidth={2.5} />
+                </div>
+                <span className="text-sm font-black text-[#451a03]">Website Language</span>
+              </div>
+              <button
+                onClick={() => setIsLanguageOpen(!isLanguageOpen)}
+                className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-black hover:bg-blue-100 transition-all active:scale-95"
+              >
+                {SUPPORTED_LANGUAGES.find(l => l.code === selectedLanguage)?.flag} {selectedLanguage.toUpperCase()}
+              </button>
+            </div>
+
+            {isLanguageOpen && (
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-stone-100">
+                {SUPPORTED_LANGUAGES.map((language) => (
+                  <button
+                    key={language.code}
+                    onClick={() => {
+                      setSelectedLanguage(language.code)
+                      changeLanguage(language.code)
+                      setIsLanguageOpen(false)
+                    }}
+                    className={`p-2.5 rounded-xl text-xs font-black transition-all active:scale-95 ${
+                      selectedLanguage === language.code
+                        ? 'bg-blue-500 text-white shadow-lg'
+                        : 'bg-stone-100 text-[#451a03] hover:bg-blue-100'
+                    }`}
+                  >
+                    <div className="text-sm">{language.flag}</div>
+                    <div className="text-[10px] font-bold mt-1 truncate">{language.name}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 4. SECURITY & AUTH - Google Sign In */}
         <div>
           <h3 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-4 ml-2">
             Security & Auth
